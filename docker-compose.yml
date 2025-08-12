@@ -1,0 +1,42 @@
+version: "3.9"
+
+services:
+  mehterbash:
+    build: ./mehterbash
+    container_name: mehterbash
+    env_file:
+      - .env
+    ports:
+      - "${MEHTERBASH_PORT}:${MEHTERBASH_PORT}"
+    volumes:
+      - mehterbash_data:/data
+    command: ["python", "app.py"]
+
+  mehteran_local:
+    build: ./mehteran
+    container_name: mehteran_local
+    env_file:
+      - .env
+    environment:
+      - ORCHESTRATOR_URL=http://${MEHTERBASH_HOST}:${MEHTERBASH_PORT}
+      - AGENT_ID=local_agent
+      - POLL_INTERVAL=5
+    depends_on:
+      - mehterbash
+    command: ["python", "agent.py"]
+
+  frontend:
+    build: ./frontend
+    container_name: mehterbash_frontend
+    env_file:
+      - .env
+    environment:
+      - REACT_APP_API_BASE=http://${MEHTERBASH_HOST}:${MEHTERBASH_PORT}
+    ports:
+      - "3000:3000"
+    depends_on:
+      - mehterbash
+    command: ["npm", "start"]
+
+volumes:
+  mehterbash_data:
